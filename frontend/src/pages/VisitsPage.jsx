@@ -7,19 +7,25 @@ import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import Skeleton from '../components/ui/Skeleton';
 import { visitApi } from '../services/api';
+import { getAcademicYearFromDate, getAcademicYearOptions } from '../utils/academicYear';
+
+const branchOptions = ['CSE', 'ECE', 'EEE', 'IT', 'MECH', 'CIVIL'];
 
 function VisitsPage() {
   const { user } = useAuth();
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
+    year: getAcademicYearFromDate(new Date()),
     search: '',
     department: '',
     company: '',
+    branch: '',
     startDate: '',
     endDate: '',
     sort: 'latest',
   });
+  const academicYearOptions = getAcademicYearOptions(6);
 
   const loadVisits = async () => {
     setLoading(true);
@@ -33,11 +39,22 @@ function VisitsPage() {
 
   useEffect(() => {
     loadVisits();
-  }, [user?.role, filters.search, filters.department, filters.company, filters.startDate, filters.endDate, filters.sort]);
+  }, [user?.role, filters.year, filters.search, filters.department, filters.company, filters.branch, filters.startDate, filters.endDate, filters.sort]);
 
   return (
     <div className="space-y-4">
-      <Card className="grid gap-3 md:grid-cols-6">
+      <Card className="grid gap-3 md:grid-cols-8">
+        <select
+          className="rounded-lg border border-slate-300 px-3 py-2"
+          value={filters.year}
+          onChange={(e) => setFilters((prev) => ({ ...prev, year: e.target.value }))}
+        >
+          {academicYearOptions.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
         <input
           placeholder="Search company, location, department"
           className="rounded-lg border border-slate-300 px-3 py-2"
@@ -56,6 +73,18 @@ function VisitsPage() {
           value={filters.company}
           onChange={(e) => setFilters((prev) => ({ ...prev, company: e.target.value }))}
         />
+        <select
+          className="rounded-lg border border-slate-300 px-3 py-2"
+          value={filters.branch}
+          onChange={(e) => setFilters((prev) => ({ ...prev, branch: e.target.value }))}
+        >
+          <option value="">All Branches</option>
+          {branchOptions.map((branch) => (
+            <option key={branch} value={branch}>
+              {branch}
+            </option>
+          ))}
+        </select>
         <input
           type="date"
           className="rounded-lg border border-slate-300 px-3 py-2"
@@ -105,6 +134,7 @@ function VisitsPage() {
               </div>
               <h3 className="font-heading text-lg font-semibold text-ink">{visit.companyName}</h3>
               <p className="mt-1 text-sm text-slate-500">{new Date(visit.date).toLocaleDateString()}</p>
+              <p className="mt-1 text-xs font-medium text-slate-500">Academic Year: {visit.academicYear}</p>
               <p className="mt-2 text-sm text-slate-600">Branch: {visit.branch} | Section: {visit.section}</p>
 
               <div className="mt-3 flex items-center gap-4 text-sm text-slate-500">

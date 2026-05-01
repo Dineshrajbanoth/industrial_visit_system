@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Button from './ui/Button';
+import { getAcademicYearFromDate, getAcademicYearOptions } from '../utils/academicYear';
 
 const branchOptions = ['CSE', 'ECE', 'EEE', 'IT', 'MECH', 'CIVIL'];
 const sectionOptions = ['A', 'B', 'C'];
@@ -7,6 +8,7 @@ const sectionOptions = ['A', 'B', 'C'];
 const initialForm = {
   companyName: '',
   date: '',
+  academicYear: getAcademicYearFromDate(new Date()),
   branch: 'CSE',
   section: 'A',
   location: '',
@@ -19,12 +21,14 @@ function VisitForm({ onSubmit, loading, initialValues, submitLabel = 'Save Visit
   const [attachments, setAttachments] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [fileErrors, setFileErrors] = useState([]);
+  const academicYearOptions = useMemo(() => getAcademicYearOptions(6), []);
 
   useEffect(() => {
     if (initialValues) {
       setForm({
         companyName: initialValues.companyName || '',
         date: initialValues.date ? initialValues.date.slice(0, 10) : '',
+        academicYear: initialValues.academicYear || getAcademicYearFromDate(initialValues.date || new Date()),
         branch: initialValues.branch || initialValues.department || 'CSE',
         section: initialValues.section || 'A',
         location: initialValues.location || '',
@@ -136,11 +140,40 @@ function VisitForm({ onSubmit, loading, initialValues, submitLabel = 'Save Visit
             required
             type={type}
             value={form[key]}
-            onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
+            onChange={(e) => {
+              const nextValue = e.target.value;
+
+              if (key === 'date') {
+                setForm((prev) => ({
+                  ...prev,
+                  date: nextValue,
+                  academicYear: getAcademicYearFromDate(nextValue),
+                }));
+                return;
+              }
+
+              setForm((prev) => ({ ...prev, [key]: nextValue }));
+            }}
             className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-ocean"
           />
         </label>
       ))}
+
+      <label className="text-sm font-medium text-slate-600">
+        Academic Year
+        <select
+          required
+          value={form.academicYear}
+          onChange={(e) => setForm((prev) => ({ ...prev, academicYear: e.target.value }))}
+          className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-ocean"
+        >
+          {academicYearOptions.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <label className="text-sm font-medium text-slate-600">
         Branch

@@ -13,6 +13,43 @@ function normalizeUpper(value) {
   return normalizeValue(value).toUpperCase();
 }
 
+function getAcademicYearFromDate(dateInput) {
+  const date = new Date(dateInput);
+  const isValidDate = !Number.isNaN(date.getTime());
+
+  if (!isValidDate) {
+    return '';
+  }
+
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const startYear = month >= 6 ? year : year - 1;
+
+  return `${startYear}-${startYear + 1}`;
+}
+
+function normalizeAcademicYear(value, fallbackDate) {
+  const raw = normalizeValue(value).replace('–', '-');
+
+  if (!raw) {
+    return getAcademicYearFromDate(fallbackDate);
+  }
+
+  const match = raw.match(/^(\d{4})-(\d{4})$/);
+  if (!match) {
+    return raw;
+  }
+
+  const start = Number(match[1]);
+  const end = Number(match[2]);
+
+  if (end !== start + 1) {
+    return raw;
+  }
+
+  return `${start}-${end}`;
+}
+
 function getVisitScope(req) {
   if (req.user?.role === 'student') {
     return {
@@ -25,7 +62,7 @@ function getVisitScope(req) {
 }
 
 function applySearchFilters(filter, query = {}) {
-  const { search = '', department, company, branch, section, startDate, endDate } = query;
+  const { search = '', department, company, branch, section, year, academicYear, startDate, endDate } = query;
 
   if (search) {
     filter.$or = [
@@ -39,8 +76,13 @@ function applySearchFilters(filter, query = {}) {
 
   if (department) filter.department = { $regex: department, $options: 'i' };
   if (company) filter.companyName = { $regex: company, $options: 'i' };
-  if (branch) filter.branch = normalizeUpper(branch);
-  if (section) filter.section = normalizeUpper(section);
+  if (branch && !filter.branch) filter.branch = normalizeUpper(branch);
+  if (section && !filter.section) filter.section = normalizeUpper(section);
+
+  const requestedAcademicYear = normalizeAcademicYear(year || academicYear);
+  if (requestedAcademicYear) {
+    filter.academicYear = requestedAcademicYear;
+  }
 
   if (startDate || endDate) {
     filter.date = {};
@@ -213,11 +255,12 @@ async function getVisitById(req, res) {
 }
 
 async function createVisit(req, res) {
-  const { companyName, date, department, branch, section, location, studentsCount } = req.body;
+  const { companyName, date, department, branch, section, location, studentsCount, academicYear } = req.body;
 
   const normalizedBranch = normalizeUpper(branch || department);
   const normalizedSection = normalizeUpper(section);
   const normalizedDepartment = normalizeValue(department || branch || normalizedBranch);
+  const normalizedAcademicYear = normalizeAcademicYear(academicYear, date);
 
   if (!companyName || !date || !normalizedBranch || !normalizedSection || !location || !studentsCount) {
     return res.status(400).json({ message: 'Please provide all required fields.' });
@@ -229,6 +272,7 @@ async function createVisit(req, res) {
   const visit = await Visit.create({
     companyName: normalizeValue(companyName),
     date,
+    academicYear: normalizedAcademicYear,
     department: normalizedDepartment,
     branch: normalizedBranch,
     section: normalizedSection,
@@ -253,12 +297,15 @@ async function updateVisit(req, res) {
   const nextBranch = normalizeUpper(updates.branch || updates.department || visit.branch);
   const nextSection = normalizeUpper(updates.section || visit.section);
   const nextDepartment = normalizeValue(updates.department || visit.department || nextBranch);
+  const nextDate = updates.date || visit.date;
+  const nextAcademicYear = normalizeAcademicYear(updates.academicYear || visit.academicYear, nextDate);
 
   updates.companyName = normalizeValue(updates.companyName || visit.companyName);
   updates.location = normalizeValue(updates.location || visit.location);
   updates.department = nextDepartment;
   updates.branch = nextBranch;
   updates.section = nextSection;
+  updates.academicYear = nextAcademicYear;
   updates.studentsCount = updates.studentsCount ? Number(updates.studentsCount) : visit.studentsCount;
 
   const newImageUrls = await persistFiles((req.files && req.files.images) || [], false);
@@ -333,26 +380,22 @@ async function deleteVisitImage(req, res) {
 }
 
 async function getDashboardAnalytics(req, res) {
-  const [
-    totalVisits,
-    visits,
-    feedback,
-    studentAgg,
-    topCompanies,
-    visitsPerMonth,
-    ratingDistribution,
-    sentimentBreakdown,
-  ] = await Promise.all([
-    Visit.countDocuments(),
-    Visit.find({}, 'companyName').lean(),
-    Feedback.find({}, 'rating sentiment').lean(),
-    Visit.aggregate([{ $group: { _id: null, totalStudents: { $sum: '$studentsCount' } } }]),
+  const visitFilter = applySearchFilters(getVisitScope(req), req.query);
+  const [totalVisits, visits, studentAgg, topCompanies, visitsPerMonth] = await Promise.all([
+    Visit.countDocuments(visitFilter),
+    Visit.find(visitFilter, '_id companyName').lean(),
     Visit.aggregate([
+      { $match: visitFilter },
+      { $group: { _id: null, totalStudents: { $sum: '$studentsCount' } } },
+    ]),
+    Visit.aggregate([
+      { $match: visitFilter },
       { $group: { _id: '$companyName', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 5 },
     ]),
     Visit.aggregate([
+      { $match: visitFilter },
       {
         $group: {
           _id: {
@@ -364,14 +407,28 @@ async function getDashboardAnalytics(req, res) {
       },
       { $sort: { '_id.year': 1, '_id.month': 1 } },
     ]),
-    Feedback.aggregate([
-      { $group: { _id: '$rating', count: { $sum: 1 } } },
-      { $sort: { _id: 1 } },
-    ]),
-    Feedback.aggregate([
-      { $group: { _id: '$sentiment', count: { $sum: 1 } } },
-    ]),
   ]);
+
+  const visitIds = visits.map((visit) => visit._id);
+
+  let feedback = [];
+  let ratingDistribution = [];
+  let sentimentBreakdown = [];
+
+  if (visitIds.length) {
+    [feedback, ratingDistribution, sentimentBreakdown] = await Promise.all([
+      Feedback.find({ visitId: { $in: visitIds } }, 'rating sentiment').lean(),
+      Feedback.aggregate([
+        { $match: { visitId: { $in: visitIds } } },
+        { $group: { _id: '$rating', count: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+      ]),
+      Feedback.aggregate([
+        { $match: { visitId: { $in: visitIds } } },
+        { $group: { _id: '$sentiment', count: { $sum: 1 } } },
+      ]),
+    ]);
+  }
 
   const avgRating = feedback.length
     ? Number((feedback.reduce((sum, item) => sum + item.rating, 0) / feedback.length).toFixed(2))

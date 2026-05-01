@@ -7,15 +7,25 @@ import VisitsLineChart from '../components/charts/VisitsLineChart';
 import RatingsBarChart from '../components/charts/RatingsBarChart';
 import SentimentPieChart from '../components/charts/SentimentPieChart';
 import { visitApi } from '../services/api';
+import { getAcademicYearFromDate, getAcademicYearOptions } from '../utils/academicYear';
+
+const branchOptions = ['CSE', 'ECE', 'EEE', 'IT', 'MECH', 'CIVIL'];
 
 function DashboardPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    year: getAcademicYearFromDate(new Date()),
+    branch: '',
+    company: '',
+  });
+  const academicYearOptions = getAcademicYearOptions(6);
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       try {
-        const { data } = await visitApi.analytics();
+        const { data } = await visitApi.analytics(filters);
         setData(data);
       } finally {
         setLoading(false);
@@ -23,7 +33,7 @@ function DashboardPage() {
     }
 
     load();
-  }, []);
+  }, [filters.year, filters.branch, filters.company]);
 
   const cards = useMemo(() => {
     if (!data) return [];
@@ -54,6 +64,40 @@ function DashboardPage() {
 
   return (
     <div className="space-y-5">
+      <Card className="grid gap-3 md:grid-cols-3">
+        <select
+          className="rounded-lg border border-slate-300 px-3 py-2"
+          value={filters.year}
+          onChange={(e) => setFilters((prev) => ({ ...prev, year: e.target.value }))}
+        >
+          {academicYearOptions.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="rounded-lg border border-slate-300 px-3 py-2"
+          value={filters.branch}
+          onChange={(e) => setFilters((prev) => ({ ...prev, branch: e.target.value }))}
+        >
+          <option value="">All Branches</option>
+          {branchOptions.map((branch) => (
+            <option key={branch} value={branch}>
+              {branch}
+            </option>
+          ))}
+        </select>
+
+        <input
+          placeholder="Filter by company"
+          className="rounded-lg border border-slate-300 px-3 py-2"
+          value={filters.company}
+          onChange={(e) => setFilters((prev) => ({ ...prev, company: e.target.value }))}
+        />
+      </Card>
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
           <MetricCard key={card.label} label={card.label} value={card.value} accent={card.accent} />

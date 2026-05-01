@@ -7,17 +7,20 @@ import Card from '../components/ui/Card';
 import Skeleton from '../components/ui/Skeleton';
 import EmptyState from '../components/ui/EmptyState';
 import Button from '../components/ui/Button';
+import { getAcademicYearFromDate, getAcademicYearOptions } from '../utils/academicYear';
 
 function StudentDashboard() {
   const { user } = useAuth();
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [academicYear, setAcademicYear] = useState(getAcademicYearFromDate(new Date()));
+  const academicYearOptions = getAcademicYearOptions(6);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       try {
-        const { data } = await visitApi.getStudent({ sort: 'latest' });
+        const { data } = await visitApi.getStudent({ sort: 'latest', year: academicYear });
         setVisits(data);
       } finally {
         setLoading(false);
@@ -25,7 +28,7 @@ function StudentDashboard() {
     }
 
     load();
-  }, []);
+  }, [academicYear]);
 
   if (loading) {
     return (
@@ -48,6 +51,20 @@ function StudentDashboard() {
         <p className="mt-2 max-w-2xl text-sm text-slate-100">
           Review only the visits assigned to your branch and section, then submit your feedback once per visit.
         </p>
+        <div className="mt-4 max-w-sm">
+          <label className="text-xs uppercase tracking-[0.16em] text-blue-200">Academic Year</label>
+          <select
+            className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
+            value={academicYear}
+            onChange={(e) => setAcademicYear(e.target.value)}
+          >
+            {academicYearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
       </Card>
 
       {!visits.length ? (

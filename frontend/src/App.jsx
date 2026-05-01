@@ -7,6 +7,7 @@ import VisitsPage from './pages/VisitsPage';
 import VisitDetailsPage from './pages/VisitDetailsPage';
 import AdminPage from './pages/AdminPage';
 import LoginPage from './pages/Login';
+import AdminRegisterPage from './pages/AdminRegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 function ProtectedRoute({ children, allowedRoles }) {
@@ -35,6 +36,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/admin-register" element={<AdminRegisterPage />} />
 
       <Route
         element={
@@ -44,7 +46,7 @@ function App() {
         }
       >
         <Route path="/" element={<HomeRedirect />} />
-        <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin', 'examiner']}><AdminDashboard /></ProtectedRoute>} />
         <Route path="/student-dashboard" element={<ProtectedRoute allowedRoles={['student']}><StudentDashboard /></ProtectedRoute>} />
         <Route path="/visits" element={<VisitsPage />} />
         <Route path="/visits/:id" element={<VisitDetailsPage />} />

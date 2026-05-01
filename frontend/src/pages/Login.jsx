@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import Card from '../components/ui/Card';
@@ -133,12 +133,12 @@ function Login() {
         {activeTab === 'admin' ? (
           <form className="grid gap-4 md:grid-cols-2" onSubmit={handleAdminSubmit}>
             <label className="text-sm font-medium text-slate-600 md:col-span-2">
-              Email or Username
+              Email
               <input
                 required
-                type="text"
+                type="email"
                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-ocean"
-                placeholder="admin@example.com or admin"
+                placeholder="admin@example.com"
                 value={adminForm.email}
                 onChange={(e) => setAdminForm((prev) => ({ ...prev, email: e.target.value }))}
               />
@@ -158,6 +158,12 @@ function Login() {
                 {loading ? 'Signing in...' : 'Admin Login'}
               </Button>
             </div>
+            <p className="text-sm text-slate-600 md:col-span-2 text-center">
+              Need to create an admin account?{' '}
+              <Link className="text-ocean underline" to="/admin-register">
+                Open Admin Registration
+              </Link>
+            </p>
           </form>
         ) : (
           <div>

@@ -6,15 +6,18 @@ import Modal from '../components/ui/Modal';
 import VisitForm from '../components/VisitForm';
 import EmptyState from '../components/ui/EmptyState';
 import { feedbackApi, visitApi } from '../services/api';
+import { getAcademicYearFromDate, getAcademicYearOptions } from '../utils/academicYear';
 
 function AdminPage() {
   const [visits, setVisits] = useState([]);
   const [selectedEdit, setSelectedEdit] = useState(null);
   const [loading, setLoading] = useState(false);
   const [feedbackMap, setFeedbackMap] = useState({});
+  const [year, setYear] = useState(getAcademicYearFromDate(new Date()));
+  const academicYearOptions = getAcademicYearOptions(6);
 
   const loadAll = async () => {
-    const { data } = await visitApi.getAll({ sort: 'latest' });
+    const { data } = await visitApi.getAll({ sort: 'latest', year });
     setVisits(data);
 
     const details = await Promise.all(data.map((visit) => feedbackApi.byVisit(visit._id)));
@@ -27,7 +30,7 @@ function AdminPage() {
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [year]);
 
   const createVisit = async (formData, done) => {
     setLoading(true);
@@ -95,6 +98,22 @@ function AdminPage() {
     <div className="space-y-4">
       <Card>
         <h3 className="mb-4 font-heading text-xl font-semibold">Add New Industrial Visit</h3>
+        <div className="mb-4 max-w-sm">
+          <label className="text-sm font-medium text-slate-600">
+            Manage Visits By Academic Year
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-ocean"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            >
+              {academicYearOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <VisitForm onSubmit={createVisit} loading={loading} submitLabel="Create Visit" />
       </Card>
 

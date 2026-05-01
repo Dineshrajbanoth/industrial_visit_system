@@ -28,8 +28,9 @@ api.interceptors.request.use((config) => {
 });
 
 export const authApi = {
-  login: (payload) => api.post('/auth/admin-login', payload),
-  adminLogin: (payload) => api.post('/auth/admin-login', payload),
+  login: (payload) => api.post('/auth/admin/login', payload),
+  adminLogin: (payload) => api.post('/auth/admin/login', payload),
+  adminRegister: (payload) => api.post('/auth/admin/register', payload),
   studentLogin: (payload) => api.post('/auth/student-login', payload),
   studentRegister: (payload) => api.post('/auth/student-register', payload),
 };
@@ -41,7 +42,7 @@ export const visitApi = {
   create: (formData) => api.post('/visits', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   update: (id, formData) => api.put(`/visits/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   delete: (id) => api.delete(`/visits/${id}`),
-  analytics: () => api.get('/visits/analytics/overview'),
+  analytics: (params) => api.get('/visits/analytics/overview', { params }),
   deleteImage: (id, imageUrl) => api.delete(`/visits/${id}/images`, { data: { imageUrl } }),
 };
 
