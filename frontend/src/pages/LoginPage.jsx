@@ -20,7 +20,11 @@ function LoginPage() {
     try {
       await login(form);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed.');
+      if (!error.response) {
+        toast.error('Cannot reach the server. Check API URL/network/firewall.');
+      } else {
+        toast.error(error.response?.data?.message || 'Login failed.');
+      }
     } finally {
       setLoading(false);
     }

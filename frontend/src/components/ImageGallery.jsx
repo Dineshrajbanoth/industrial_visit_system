@@ -5,7 +5,9 @@ function toAbsolute(url) {
   if (url.startsWith('http')) return url;
   const envBase = String(import.meta.env.VITE_API_URL || '').trim();
   const fallbackBase = typeof window !== 'undefined'
-    ? `${window.location.protocol}//${window.location.hostname}:5000/api`
+    ? import.meta.env.DEV
+      ? `${window.location.protocol}//${window.location.hostname}:5000/api`
+      : `${window.location.origin}/_/backend/api`
     : 'http://localhost:5000/api';
   const base = (envBase || fallbackBase).replace('/api', '');
   return `${base}${url}`;

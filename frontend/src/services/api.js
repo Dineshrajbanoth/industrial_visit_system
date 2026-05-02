@@ -13,6 +13,11 @@ function getStoredToken() {
   return null;
 }
 
+function getDevApiBaseUrl() {
+  const { protocol, hostname } = window.location;
+  return `${protocol}//${hostname}:5000/api`;
+}
+
 function resolveApiBaseUrl() {
   const fromEnv = String(import.meta.env.VITE_API_URL || '').trim();
   if (fromEnv) {
@@ -20,8 +25,12 @@ function resolveApiBaseUrl() {
   }
 
   if (typeof window !== 'undefined') {
-    const { protocol, hostname } = window.location;
-    return `${protocol}//${hostname}:5000/api`;
+    if (import.meta.env.DEV) {
+      return getDevApiBaseUrl();
+    }
+
+    // Vercel monorepo setup exposes backend under /_/backend.
+    return `${window.location.origin}/_/backend/api`;
   }
 
   return 'http://localhost:5000/api';

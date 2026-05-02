@@ -57,7 +57,11 @@ function Login() {
       await loginAdmin(adminForm);
       navigate('/admin-dashboard', { replace: true });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Admin login failed.');
+      if (!error.response) {
+        toast.error('Cannot reach the server. Check API URL/network/firewall.');
+      } else {
+        toast.error(error.response?.data?.message || 'Admin login failed.');
+      }
     } finally {
       setLoading(false);
     }
