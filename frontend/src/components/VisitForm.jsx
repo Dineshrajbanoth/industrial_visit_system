@@ -3,7 +3,7 @@ import Button from './ui/Button';
 import { getAcademicYearFromDate, getAcademicYearOptions } from '../utils/academicYear';
 
 const branchOptions = ['CSE', 'ECE', 'EEE', 'IT', 'MECH', 'CIVIL'];
-const sectionOptions = ['A', 'B', 'C'];
+const sectionOptions = ['A', 'B', 'C', 'D'];
 
 const initialForm = {
   companyName: '',
@@ -21,7 +21,7 @@ function VisitForm({ onSubmit, loading, initialValues, submitLabel = 'Save Visit
   const [attachments, setAttachments] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [fileErrors, setFileErrors] = useState([]);
-  const academicYearOptions = useMemo(() => getAcademicYearOptions(6), []);
+  const academicYearOptions = useMemo(() => getAcademicYearOptions(0), []);
 
   useEffect(() => {
     if (initialValues) {

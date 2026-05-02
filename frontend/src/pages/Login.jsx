@@ -6,7 +6,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 
 const branchOptions = ['CSE', 'ECE', 'EEE', 'IT', 'MECH', 'CIVIL'];
-const sectionOptions = ['A', 'B', 'C'];
+const sectionOptions = ['A', 'B', 'C', 'D'];
 
 function Login() {
   const navigate = useNavigate();

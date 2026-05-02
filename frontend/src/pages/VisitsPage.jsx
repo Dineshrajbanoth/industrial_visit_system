@@ -25,7 +25,7 @@ function VisitsPage() {
     endDate: '',
     sort: 'latest',
   });
-  const academicYearOptions = getAcademicYearOptions(6);
+  const academicYearOptions = getAcademicYearOptions(0);
 
   const loadVisits = async () => {
     setLoading(true);

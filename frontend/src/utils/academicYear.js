@@ -13,12 +13,29 @@ export function getAcademicYearFromDate(dateInput = new Date()) {
   return `${startYear}-${startYear + 1}`;
 }
 
-export function getAcademicYearOptions(count = 5, anchorDate = new Date()) {
+export function getAcademicYearOptions(count = 5, anchorDate = new Date(), minStartYear = 2010) {
+  // Returns academic year strings from the current academic year down to minStartYear
   const current = getAcademicYearFromDate(anchorDate);
   const startYear = Number(current.split('-')[0] || new Date().getFullYear());
 
-  return Array.from({ length: count }, (_, idx) => {
-    const valueStart = startYear - idx;
-    return `${valueStart}-${valueStart + 1}`;
-  });
+  const end = Math.max(minStartYear, 1900);
+  const years = [];
+  for (let y = startYear; y >= end; y--) {
+    years.push(`${y}-${y + 1}`);
+    if (count && years.length >= count && minStartYear === 2010) {
+      // If count provided and default minStartYear used, respect count as upper limit
+      break;
+    }
+  }
+
+  // If a specific minStartYear was provided (other than default), generate full range
+  if (minStartYear !== 2010) {
+    const full = [];
+    for (let y = startYear; y >= minStartYear; y--) {
+      full.push(`${y}-${y + 1}`);
+    }
+    return full;
+  }
+
+  return years;
 }

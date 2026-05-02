@@ -19,7 +19,7 @@ function DashboardPage() {
     branch: '',
     company: '',
   });
-  const academicYearOptions = getAcademicYearOptions(6);
+  const academicYearOptions = getAcademicYearOptions(0);
 
   useEffect(() => {
     async function load() {

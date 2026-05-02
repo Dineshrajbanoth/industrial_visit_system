@@ -14,7 +14,7 @@ function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [feedbackMap, setFeedbackMap] = useState({});
   const [year, setYear] = useState(getAcademicYearFromDate(new Date()));
-  const academicYearOptions = getAcademicYearOptions(6);
+  const academicYearOptions = getAcademicYearOptions(0);
 
   const loadAll = async () => {
     const { data } = await visitApi.getAll({ sort: 'latest', year });

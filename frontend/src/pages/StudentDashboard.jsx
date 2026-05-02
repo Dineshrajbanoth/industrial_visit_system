@@ -14,7 +14,8 @@ function StudentDashboard() {
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [academicYear, setAcademicYear] = useState(getAcademicYearFromDate(new Date()));
-  const academicYearOptions = getAcademicYearOptions(6);
+  const academicYearOptions = getAcademicYearOptions(0);
+  const [customYear, setCustomYear] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -57,17 +58,44 @@ function StudentDashboard() {
         </p>
         <div className="mt-4 max-w-sm">
           <label className="text-xs font-medium uppercase tracking-[0.16em] text-slate-300">Academic Year</label>
-          <select
-            className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950/70 px-3 py-2 text-sm text-white shadow-inner shadow-black/10 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
-            value={academicYear}
-            onChange={(e) => setAcademicYear(e.target.value)}
-          >
-            {academicYearOptions.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
+          <div className="mt-1 flex gap-2">
+            <select
+              className="flex-1 rounded-lg border border-slate-600 bg-slate-950/70 px-3 py-2 text-sm text-white shadow-inner shadow-black/10 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
+              value={academicYear}
+              onChange={(e) => {
+                setAcademicYear(e.target.value);
+                setCustomYear('');
+              }}
+            >
+              {(
+                academicYearOptions.includes(academicYear)
+                  ? academicYearOptions
+                  : [academicYear, ...academicYearOptions]
+              ).map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="text"
+              placeholder="Or enter year (e.g. 2016 or 2016-2017)"
+              value={customYear}
+              onChange={(e) => setCustomYear(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = e.target.value.trim();
+                  if (/^\d{4}$/.test(val)) {
+                    setAcademicYear(`${val}-${Number(val) + 1}`);
+                  } else if (/^\d{4}-\d{4}$/.test(val)) {
+                    setAcademicYear(val);
+                  }
+                }
+              }}
+              className="w-36 rounded-lg border border-slate-600 bg-slate-950/70 px-3 py-2 text-sm text-white outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
+            />
+          </div>
         </div>
       </Card>
 
